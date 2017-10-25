@@ -30,4 +30,5 @@ def convertToEfficientFormat(maxCount=tools.fileLinesCount(fe.trainXFileName)):
             if count >= maxCount:
                 break
 
-convertToEfficientFormat()
+if __name__=="__main__":
+    convertToEfficientFormat()

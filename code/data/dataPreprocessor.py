@@ -5,7 +5,11 @@ import featureExtractor as fe
 
 import cv2
 
-trainXFileNameOut = "processed_train_x.csv"
+inputFileName = fe.testXFileName
+outputFileName = fe.processedTestXFileName
+
+writeCsv = True # when false will write multiple .png files to a folder, when true will write to a single .csv file
+outputPath = "testImgsRaw/" # will write .png images here when writeCsv is False
 
 # consider 3x3 and 9x9 areas, remove areas with less than 4 white pixels
 # assumes input where all pixels are either 0 or 255
@@ -41,9 +45,13 @@ def removeWhiteSpecs(img):
 
     return imgCopy
 
-def preprocess(maxCount=tools.fileLinesCount(fe.trainXFileName), threshold=240):
-    with open(fe.trainXFileName, "r") as xFile, \
-            open(trainXFileNameOut, "w") as xOutFile:
+def preprocess(maxCount = None, threshold=240):
+    if maxCount == None:
+        maxCount = tools.fileLinesCount(inputFileName)
+
+    with open(inputFileName, "r") as xFile:
+        if writeCsv:
+            xOutFile = open(outputFileName, "w")
 
         count = 0
         for xline in xFile:
@@ -57,32 +65,28 @@ def preprocess(maxCount=tools.fileLinesCount(fe.trainXFileName), threshold=240):
 
             imgNoSpecs = removeWhiteSpecs(imgCopy)
 
-            # for visualization only
-            # imgComparison = np.zeros((2 * fe.imgDim, 2 * fe.imgDim), np.uint8)
-            # imgComparison[0         :     fe.imgDim, 0         :     fe.imgDim] = img
-            # imgComparison[0         :     fe.imgDim, fe.imgDim : 2 * fe.imgDim] = imgCopy
-            # imgComparison[fe.imgDim : 2 * fe.imgDim, 0         :     fe.imgDim] = imgCopy - imgNoSpecs
-            # imgComparison[fe.imgDim : 2 * fe.imgDim, fe.imgDim : 2 * fe.imgDim] = imgNoSpecs
-            # imgComparison = cv2.resize(imgComparison, (0,0), fx=5, fy=5, interpolation=cv2.INTER_NEAREST)
-            # cv2.imshow("img comparison".format(count), imgComparison)
-            # cv2.waitKey()
+            if writeCsv:
+                strX = ""
+                imgNoSpecs = imgNoSpecs.flatten()
+                for i in range(fe.imgDimSquared):
+                    strX += str(imgNoSpecs[i]) + ','
 
-            strX = ""
-            imgCopy = imgCopy.flatten()
-            for i in range(fe.imgDimSquared):
-                strX += str(imgCopy[i]) + ','
+                strX = strX[:-1] # remove the last ','
+                strX += "\n"
 
-            strX = strX[:-1] # remove the last ','
-            strX += "\n"
-
-            xOutFile.write(strX)
+                xOutFile.write(strX)
+            else:
+                cv2.imwrite(outputPath + "img{}.png".format(count), imgNoSpecs)
 
             count += 1
             if count % 50 == 0:
-                print("\rFinished processing {} lines".format(count), end="")
+                print("\rFinished processing {}/{} lines".format(count, maxCount), end="")
 
             if count >= maxCount:
                 break
+
+    if writeCsv:
+        xOutFile.close()
 
 if __name__=="__main__":
     preprocess()

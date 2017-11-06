@@ -9,10 +9,17 @@ from scipy import stats as st
 import data.dataPreprocessor as dp
 import cv2
 
-trainXFileNameOut = "processed_train_x.csv"
+inputFileName = fe.processedTestXFileName
+trainXFileNameOut = "segmented_train_x.csv"
 
-# sets pixels far from center to zero
-def suppressEdgeElements(img, distanceThreshold=0.6):
+doImShow = True
+doImWrite = False
+imWritePath = "testImgsSegmented128x28/"
+
+# sets pixels far from center to zero based on their Center of Mass
+# distanceThreshold is the radius of a unit circle around the center of the image
+# all elements whose CoM
+def suppressEdgeElements(img, distanceThreshold=0.55):
     h, w = img.shape[:2]
     maxRtoKeep = (h + w) / 4 * distanceThreshold
     imageCenter = np.array([h / 2, w / 2], np.float32)
@@ -39,23 +46,31 @@ def suppressEdgeElements(img, distanceThreshold=0.6):
 
     return imgCopy
 
-def processImages(maxCount=tools.fileLinesCount(fe.trainXFileName), extractRadius=20, grabCutEdgeSize=4): #tools.fileLinesCount(fe.trainXFileName)):
+def processImages(maxCount=None, extractRadius=20):
+    if maxCount == None:
+        maxCount = tools.fileLinesCount(inputFileName)
+
     extractRadius2 = extractRadius * 2
-    with open(fe.processedTrainXFileName, "r") as xFile:
+
+    with open(inputFileName, "r") as xFile:
 
         count = 0
 
         # extract characters as subimages using image's moments as character centers
         toSkip = 0
+
         skipCount = 0
         for xline in xFile:
             try:
                 if skipCount < toSkip:
                     print("skipping!")
                     skipCount += 1
+                    count += 1
                     continue
 
-                doImshow = True
+                # create local vars so these can be modified on errors; init to global vars
+                doImshow = doImShow
+                doImwrite = doImWrite
 
                 img = np.fromstring(xline, sep=',', dtype=np.uint8)
                 img = img.reshape(fe.imgDimTuple)
@@ -182,11 +197,11 @@ def processImages(maxCount=tools.fileLinesCount(fe.trainXFileName), extractRadiu
 
                     # adjust the subimage in such a way that the extracted character is as centered as possible
                     # compute center of mass (CoM) and then a vector for CoM displacement to centralize CoM
-
                     centerOfMass = np.array(ndimage.measurements.center_of_mass(extracted)).transpose()
                     centerDisplaceVector = (extractRadius - np.round(centerOfMass)).astype(np.int8)
+
                     # limit max CoM displacement
-                    centerDisplaceVector[centerDisplaceVector > extractRadius / 2] = int(extractRadius / 2)
+                    centerDisplaceVector = np.clip(centerDisplaceVector, -int(extractRadius / 4), int(extractRadius / 4))
 
                     # shift CoM
                     shifted = np.zeros((extractRadius2, extractRadius2), np.uint8)
@@ -229,27 +244,21 @@ def processImages(maxCount=tools.fileLinesCount(fe.trainXFileName), extractRadiu
                     # just for visualization
                     centersImg[..., 0] = img # put the original image in the blue channel
                     centersImg = tools.resize(centersImg, 10, 10)
-                    extractedCenters = tools.resize(extractedCenters)
+                    _extractedCenters = tools.resize(extractedCenters)
                     cv2.imshow("centersImg".format(count), centersImg)
-                    cv2.imshow("extractedCenters1", extractedCenters[..., 0])
-                    cv2.imshow("extractedCenters2", extractedCenters[..., 1])
-                    cv2.imshow("extractedCenters3", extractedCenters[..., 2])
+                    cv2.imshow("extractedCenters1", _extractedCenters)
+                    # cv2.imshow("extractedCenters1", _extractedCenters[..., 0])
+                    # cv2.imshow("extractedCenters2", _extractedCenters[..., 1])
+                    # cv2.imshow("extractedCenters3", _extractedCenters[..., 2])
                     cv2.waitKey(0)
 
-                dim = 28
-                extractedCenters28 = np.zeros((dim, dim * 3), np.uint8)
-                for i in range(3):
-                    offset = int(np.ceil((extractRadius2 - dim) / 2))
-                    extractedCenters28[..., i * dim : (i + 1) * dim] = extractedCenters[offset: extractRadius2 - offset,
-                                                                       offset: extractRadius2 - offset,
-                                                                       i]
+                if doImwrite:
+                    cv2.imwrite(imWritePath + "img{}.png".format(count), extractedCenters)
 
                 # TODO: write extractedCenters[1,2,3] to file
                 # for i in range(3):
                 #     for row in extractedCenters[..., i]:
                 #         print("row " + str(row))
-
-                pass
 
             except cv2.error as e:
                 print("cv2 error: {}".format(e))
@@ -257,7 +266,7 @@ def processImages(maxCount=tools.fileLinesCount(fe.trainXFileName), extractRadiu
 
             count += 1
             if count % 50 == 0:
-                print("\rFinished processing {}/{} lines".format(count, maxCount), end="")
+                print("\rFinished processing {}/{} lines".format(count, maxCount - toSkip), end="")
 
             if count >= maxCount:
                 break

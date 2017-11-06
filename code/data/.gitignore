@@ -1,3 +1,11 @@
 test_x.csv
 train_x.csv
 train_y.csv
+
+*.csv
+
+imgs/
+imgsRaw/
+
+emnist/
+mnist/

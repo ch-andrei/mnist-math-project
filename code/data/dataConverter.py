@@ -3,11 +3,11 @@ import numpy as np
 import tools
 import featureExtractor as fe
 
-trainXFileNameOut = "_train_x.csv"
+outputFileNameOut = "_test_x.csv"
 
-def convertToEfficientFormat(maxCount=tools.fileLinesCount(fe.trainXFileName)):
-    with open(fe.trainXFileName, "r") as xFile, \
-            open(trainXFileNameOut, "w") as xOutFile:
+def convertToEfficientFormat(maxCount=tools.fileLinesCount(fe.testXFileName)):
+    with open(fe.testXFileName, "r") as xFile, \
+            open(outputFileNameOut, "w") as xOutFile:
 
         count = 0
         for xline in xFile:
@@ -25,7 +25,7 @@ def convertToEfficientFormat(maxCount=tools.fileLinesCount(fe.trainXFileName)):
             count += 1
 
             if count % 50 == 0:
-                print("\rFinished processing {} lines".format(count), end="")
+                print("\rFinished processing {}/{} lines".format(count, maxCount), end="")
 
             if count >= maxCount:
                 break

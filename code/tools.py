@@ -23,6 +23,7 @@ def pickleReadOrWriteObject(path, object=None):
             pk.dump(object, f)
 
 def fileLinesCount(fname):
+    i = 0 # init this for case when file has zero lines
     with open(fname, "r", encoding="utf8") as f:
         for i, l in enumerate(f):
             pass

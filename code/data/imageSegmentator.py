@@ -187,7 +187,7 @@ def segmentImage(img, cnnCenterSegmentHelper, count, extractRadius = 20):
     # centers = centers.tolist()
     # # make sure at least 3 centers are available
     # while len(centers) < 3:
-    #     # TODO: improve this to generate better new centers
+    #     # TODO: potentially can improve this to generate better new centers
     #     centers.append(centers[0])
     # centers = np.array(centers)
 

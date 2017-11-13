@@ -2,26 +2,15 @@
 
 import numpy as np
 
-import tools
-
-from keras.models import Sequential
 from keras.optimizers import SGD
 
 from keras.models import Model
 
 from keras import applications
 from keras.preprocessing.image import ImageDataGenerator
-from keras import optimizers
-from keras.models import Sequential
 from keras.layers import Dropout, Flatten, Dense
 from keras import Input
 from keras.callbacks import EarlyStopping
-
-import cv2
-
-from keras.utils.data_utils import get_file
-
-from sklearn.metrics import log_loss
 
 import featureExtractor as fe
 from data.datasetGenerator import TrioDatasetGenerator
@@ -36,32 +25,33 @@ learningRate = 1e-4
 ########################################################################################################################
 
 # global flag to control training (on/off)
-doTrain = True
+doTrain = False
 doEvaluationPostTraining = True # predict on test samples
 
 # load weights from existing file before retraining
 doReinforceTrain = True
 
-# stage 1: train on random dataset
-doTrainStage1 = True
+# stage 1: train on augmented dataset
+doTrainStage1 = False
 
 # stage 2: train on the original dataset with noisy background
 doTrainStage2 = True
 
 ########################################################################################################################
-# originally, this NN was trained on a gtx 1050ti with 4GB VRAM for several days (including reinforcement learning)
+# originally, this NN was trained on a gtx 1050ti with 4GB VRAM for several days
+# including sessions of reinforcement learning after the initial training
 
 generatorSamplesPerBatch = 8 # lower for decreased memory usage
-trainingBatchCount = 1000 # samples per epoch = generatorFlowBatchSize * trainingBatchCount
-validationBatchCount = 100
+trainingBatchCount = 2000 # samples per epoch = generatorFlowBatchSize * trainingBatchCount
+validationBatchCount = 200
 
 # stage 1
-epochsStage1 = 10 # max number of epochs
-patienceEpochsStage1 = 2 # epochs with no improvement until training is stopped
+epochsStage1 = 20 # max number of epochs
+patienceEpochsStage1 = 3 # epochs with no improvement until training is stopped
 
 # stage 2
-epochsStage2 = 10
-patienceEpochsStage2 = 2
+epochsStage2 = 20
+patienceEpochsStage2 = 3
 
 ########################################################################################################################
 

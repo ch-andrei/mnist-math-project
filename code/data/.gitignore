@@ -1,0 +1,7 @@
+test_x.csv
+train_x.csv
+train_y.csv
+
+# data files
+/imgs
+/resources
